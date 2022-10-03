@@ -1,6 +1,3 @@
-# 
-
-
 import json
 import os
 import time
@@ -14,7 +11,6 @@ import cv2
 import threading
 import requests
 import time
-
 
 MODEL_PATH = 'AIGO TFLite'
 VIDEO_NUMBER = 0
@@ -54,9 +50,7 @@ def get_prediction(image, interpreter, signature):
     for key, val in outputs.items():
         if isinstance(val, bytes):
             outputs[key] = val.decode()
-
     return outputs
-
 
 def process_image(image, input_shape):
     width, height = image.size
@@ -69,7 +63,6 @@ def process_image(image, input_shape):
     image = np.asarray(image) / 255.0
     # format input as model expects
     return image.reshape(input_shape).astype(np.float32)
-
 
 def Read_Key_Data(crop_img,image_src,scale,box_left,box_top, \
                   key_detect,key_flag,display_key,confirm,concentration,location,shift_times,LOD):
@@ -113,7 +106,6 @@ def Read_Key_Data(crop_img,image_src,scale,box_left,box_top, \
         confirm = 1
         shift_times = shift_times + 1 
 
-          
     if ((read_dir_key == 113) or (read_dir_key == 27)):
         key_detect = 1
         print("QUIT")
@@ -148,6 +140,7 @@ def Track_func(detail,image_src,box_top,box_left,scale,locate_num,t,should_track
     check_time = time.time()
     print(("商品"+detail[1][1], "碳足跡:"+str(detail[1][2])+"g" ," "  ))
     print("sending msg")
+
     while (should_track )and(check_time - Base_time<= 4):
         check_time = time.time()
         success, point = tracker.update(frame)   # 左上、右下座標回傳   
@@ -167,11 +160,11 @@ def send_Line(str1,str2,str3):
     ###
     ###r = requests.post(LINE_URL, params={"value1":str1, "value2":str2,"value3":str3})
     ###
+
 def TP (image_src):
     global frame   
     frame = image_src
     return frame
-
 
 def main():    
     global signature_inputs
@@ -189,8 +182,6 @@ def main():
     global LOD
     global CF_total 
  
-   
-    
     with open( MODEL_PATH + "/signature.json", "r") as f:
         signature = json.load(f)
 
@@ -213,22 +204,22 @@ def main():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT)
     
-    #����
+    #按鍵
     key_detect = 0
-    display_key = 0 #��J������
+    display_key = 0 #按鍵輸入
 
-    #��m�ؤo
-    scale=50 #�j�p
+    #位置尺寸
+    scale=50 #大小
     box_left = 0
     box_top = 0
     
-    #���ѫY��
-    key_flag = 0 #�O�_��w(1�S���A0��)
-    classification_flag = 0 #���Ѩ쪫��
-    confirm = 1 #�T�{��������ʧ@(1�����A0������)  
+    #辨識回報
+    key_flag = 0 #鎖定(1有，0沒有)
+    classification_flag = 0 #辨識到物件
+    confirm = 1 #確認完成按鍵動作(1完成，0未完成) 
     frame_counter = 0
     
-    #�����Y��
+    #偵測係數
     scale  = 160        #int(input("type in your scale"))
     LOD =160                 #int(input('type in your level of detail\nThe smaller the more meticulous'))
     location = []
@@ -239,14 +230,6 @@ def main():
     should_track = False
     i_token = 0
 
-
-    
-   
-    
-
-    
-    
-
     while (key_detect == 0) and (cap.isOpened()):
 
         if (type(VIDEO_NUMBER) == int) or ('http' in VIDEO_NUMBER):
@@ -256,9 +239,11 @@ def main():
         else:
             ret,image_src = cap.read()
             frame_counter += 1
+
             if frame_counter == int(cap.get(cv2.CAP_PROP_FRAME_COUNT)):
                 frame_counter = 0
-                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)                
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  
+                
         if (ret != True):
             break
 
@@ -267,6 +252,7 @@ def main():
 
         if (confirm == 0):
             crop_img = image_src
+
         if (confirm == 1):
             temp_img = image_src[int(box_top):int(box_top + scale),int(box_left):int(box_left + scale)]
             crop_img = cv2.resize(temp_img,
@@ -279,12 +265,8 @@ def main():
             Label_name = signature['classes']['Label'][prediction['Confidences'].index(max(prediction['Confidences']))]
             Info_Text = Label_name + " " + str(round(max(prediction['Confidences']),3))
             classification_flag = 1
-            
-        
-         
             if (str(Label_name) != "0"):
                 shift_time = time.time()
-                
 
                 for i in range(len(Data_Base)):
                     try :
@@ -294,37 +276,31 @@ def main():
                             i_token = i
                             Data_Base[i][3] = time.time()
                             location.append([locate_num-1,Data_Base[i],(box_top,box_left),(box_top + scale,box_left + scale)])
-                            should_track = True
-                                      
-                           
+                            should_track = True    
+                            
                     except: 
                         #print("Label not found")
-                        None
-                        
+                        None   
+
             if should_track :
                 t.append(threading.Thread(target = Track_func,args =(location[locate_num-1], \
                                                                         image_src,box_top,box_left,scale,locate_num-1, \
                                                                         t,should_track,Data_Base[i_token][3])))
                 should_track = False
-                t[locate_num-1].start()
-                
-        
-       
-                    
-                
+                t[locate_num-1].start
+
         if ((key_flag == 0) and ( classification_flag == 1)):
             key_flag = 1
             classification_flag = 0
             confirm = 0
-            
+
         crop_img,image_src,scale,box_left,box_top,key_detect, \
         key_flag,display_key,confirm,concentration,location,shift_times,LOD = Read_Key_Data( \
         crop_img,image_src,scale,box_left,box_top,key_detect, \
         key_flag,display_key,confirm,concentration,location,shift_times,LOD)
-    
+
         Show_ROI_Info(image_src,display_key,frame_width,frame_height,scale,box_left,box_top,Info_Text)
-        
-        
+
         if (key_flag == 1):
             cv2.rectangle(image_src,
                 (int(box_left),int(box_top)),(int(box_left+scale),int(box_top+scale)),
@@ -336,8 +312,6 @@ def main():
                 (int(box_left),int(box_top)),(int(box_left+scale),int(box_top+scale)),
                 (0,225,0),2)
             cv2.imshow('Detecting ....',image_src)
-
-         
 
     cap.release()
     cv2.destroyAllWindows()
