@@ -35,18 +35,12 @@ Data_Base = [["2102202001","統一陽光豆漿",380,0],
 
 
 def get_prediction(image, interpreter, signature):
-    # process image to be compatible with the model
     input_data = process_image(image, image_shape)
-
-    # set the input to run
+    
     interpreter.set_tensor(model_index, input_data)
     interpreter.invoke()
-
-    # grab our desired outputs from the interpreter!
-    # un-batch since we ran an image with batch size of 1, and convert to normal python types with tolist()
     outputs = {key: interpreter.get_tensor(value.get("index")).tolist()[0] for key, value in model_outputs.items()}
 
-    # postprocessing! convert any byte strings to normal strings with .decode()
     for key, val in outputs.items():
         if isinstance(val, bytes):
             outputs[key] = val.decode()
@@ -54,14 +48,11 @@ def get_prediction(image, interpreter, signature):
 
 def process_image(image, input_shape):
     width, height = image.size
-    # ensure image type is compatible with model and convert if not
     input_width, input_height = input_shape[1:3]
     if image.width != input_width or image.height != input_height:
         image = image.resize((input_width, input_height))
 
-    # make 0-1 float instead of 0-255 int (that PIL Image loads by default)
     image = np.asarray(image) / 255.0
-    # format input as model expects
     return image.reshape(input_shape).astype(np.float32)
 
 def Read_Key_Data(crop_img,image_src,scale,box_left,box_top, \
@@ -152,13 +143,13 @@ def Track_func(detail,image_src,box_top,box_left,scale,locate_num,t,should_track
         n_key = cv2.waitKey(1)
 
 def send_Line(str1,str2,str3):
-    LINE_event_name = 'thing'
-    LINE_key = 'lrft_gvwD9wuQ3PJYwSGdvkX9ehtai4RQwkvT0-s_O9'
+    LINE_event_name = '#########'   #IFTTT EVENT NAME
+    LINE_key = '########################' #IFTTT LINE KEY
     # Your IFTTT LINE_URL with event name, key and json parameters (values)
     LINE_URL='https://maker.ifttt.com/trigger/' + LINE_event_name + '/with/key/' + LINE_key
 
     ###
-    ###r = requests.post(LINE_URL, params={"value1":str1, "value2":str2,"value3":str3})
+    r = requests.post(LINE_URL, params={"value1":str1, "value2":str2,"value3":str3})
     ###
 
 def TP (image_src):
