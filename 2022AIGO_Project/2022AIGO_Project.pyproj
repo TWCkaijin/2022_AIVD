@@ -4,7 +4,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>6a25d697-f63e-4647-93b0-5eb4dad22942</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>_2022AIGO_Project.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
